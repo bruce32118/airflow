@@ -70,7 +70,6 @@ from airflow.www_rbac.forms import (DateTimeForm, DateTimeWithNumRunsForm,
                                     DagRunForm, ConnectionForm)
 from airflow.www_rbac.widgets import AirflowModelListWidget
 
-
 PAGE_SIZE = conf.getint('webserver', 'page_size')
 if os.environ.get('SKIP_DAGS_PARSING') != 'True':
     dagbag = models.DagBag(settings.DAGS_FOLDER)
@@ -211,10 +210,22 @@ class Airflow(AirflowBaseView):
         else:
             hide_paused = hide_paused_dags_by_default
 
+        current_user = appbuilder.sm.get_user()
+	    print(current_user.tenant_id)
+
         # read orm_dags from the db
-        sql_query = session.query(DM).filter(
-            ~DM.is_subdag, DM.is_active
-        )
+        # sql_query = session.query(DM).filter(
+        #     ~DM.is_subdag, DM.is_active
+        # )
+        roles = {role.name for role in current_user.roles}
+        if {'Admin'} & roles:
+	        sql_query = session.query(DM).filter(
+                    ~DM.is_subdag, DM.is_active
+            )
+	    else:
+            sql_query = session.query(DM).filter(
+                ~DM.is_subdag, DM.is_active, DM.owners == current_user.tenant_id
+            )
 
         # optionally filter out "paused" dags
         if hide_paused:
@@ -273,7 +284,8 @@ class Airflow(AirflowBaseView):
             sorted_dag_ids = sorted(all_dag_ids)
         else:
             webserver_dags_filtered = webserver_dags
-            sorted_dag_ids = sorted(set(orm_dags.keys()) | set(webserver_dags.keys()))
+            sorted_dag_ids = sorted(set(orm_dags.keys()) & set(webserver_dags.keys()))
+
 
         start = current_page * dags_per_page
         end = start + dags_per_page
