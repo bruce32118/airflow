@@ -193,12 +193,12 @@ class AirflowSecurityManager(SecurityManager):
             self.get_session.commit()
         else:
             logging.info('Existing permissions for the role:%s within the database will persist.', role_name)
-            
+
     def get_user(self, user=None):
  	    if user is None:
                 user = g.user
-	    return user
-
+        return user
+        
     def get_user_roles(self, user=None):
         """
         Get all the roles associated with the user.
