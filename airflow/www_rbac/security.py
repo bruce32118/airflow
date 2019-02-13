@@ -198,7 +198,6 @@ class AirflowSecurityManager(SecurityManager):
  	    if user is None:
                 user = g.user
         return user
-        
     def get_user_roles(self, user=None):
         """
         Get all the roles associated with the user.
